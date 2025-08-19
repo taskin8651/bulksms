@@ -93,6 +93,7 @@ class EmailController extends Controller
 
    public function store(StoreEmailRequest $request)
 {
+    dd($request->all());
     $email = Email::create($request->all());
     $email->contacts()->sync($request->input('contacts', []));
 
