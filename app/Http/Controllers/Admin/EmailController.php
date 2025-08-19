@@ -93,16 +93,16 @@ class EmailController extends Controller
 
    public function store(StoreEmailRequest $request)
 {
-    dd($request->all());
     $email = Email::create($request->all());
     $email->contacts()->sync($request->input('contacts', []));
 
     // Template nikalo
     $template = EmailTemplate::find($request->template_id);
-    
+
 
     // Contacts nikalo
     $contacts = Contact::whereIn('id', $request->contacts)->get();
+    dd($contacts);
 
     foreach ($contacts as $contact) {
         Mail::to($contact->email)->send(new CampaignMail($template));
