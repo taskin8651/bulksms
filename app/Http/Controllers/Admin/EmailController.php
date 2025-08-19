@@ -103,11 +103,12 @@ class EmailController extends Controller
     // Contacts nikalo
     $contacts = Contact::whereIn('id', $request->contacts)->get();
 
-    foreach ($contacts as $contact) {
+   foreach ($contacts as $contact) {
     try {
         Mail::to($contact->email)->send(new CampaignMail($template));
     } catch (\Exception $e) {
-        dd($e->getMessage()); // exact error dikhega
+        \Log::error('Mail error: ' . $e->getMessage());
+        dd($e->getMessage()); // yahan jo output milega wo mujhe batao
     }
 }
 
