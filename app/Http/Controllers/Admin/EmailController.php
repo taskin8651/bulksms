@@ -135,7 +135,6 @@ public function store(StoreEmailRequest $request)
     // Update email status based on results
     $status = $errorCount > 0 ? ($successCount > 0 ? 'partially_failed' : 'failed') : 'completed';
     $email->update(['status' => $status]);
-dd($email->status);
     // Prepare response message
     $message = "Emails sent successfully! {$successCount} sent, {$errorCount} failed.";
     

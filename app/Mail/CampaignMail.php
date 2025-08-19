@@ -31,13 +31,13 @@ class CampaignMail extends Mailable
      *
      * @return $this
      */
-    public function build()
-    {
-        return $this->subject($this->template->subject)
-                    ->view('emails.campaign')
-                    ->with([
-                        'content' => $this->template->content,
-                        'contact' => $this->contact,
-                    ]);
-    }
+   public function build()
+{
+    return $this->subject($this->template->subject)
+                ->view('emails.campaign')
+                ->with([
+                    'body' => $this->template->content, // Change from 'content' to 'body'
+                    'contact' => $this->contact,
+                ]);
+}
 }
