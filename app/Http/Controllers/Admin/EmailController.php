@@ -113,7 +113,7 @@ public function store(StoreEmailRequest $request)
     $successCount = 0;
     $errorCount = 0;
     $errors = [];
-    dd($template, $contacts);
+    // dd($template, $contacts);
 
     foreach ($contacts as $contact) {
         try {
@@ -130,11 +130,12 @@ public function store(StoreEmailRequest $request)
             \Log::error('Mail error for ' . $contact->email . ': ' . $e->getMessage());
         }
     }
+    dd($successCount, $errorCount, $errors);
 
     // Update email status based on results
     $status = $errorCount > 0 ? ($successCount > 0 ? 'partially_failed' : 'failed') : 'completed';
     $email->update(['status' => $status]);
-// dd($email->status);
+dd($email->status);
     // Prepare response message
     $message = "Emails sent successfully! {$successCount} sent, {$errorCount} failed.";
     
