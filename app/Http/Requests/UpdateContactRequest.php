@@ -24,14 +24,12 @@ class UpdateContactRequest extends FormRequest
             'phone_number' => [
                 'nullable',
                 'integer',
-                'min:-2147483648',
-                'max:2147483647',
+                
             ],
             'whatsapp_number' => [
                 'nullable',
                 'integer',
-                'min:-2147483648',
-                'max:2147483647',
+               
             ],
         ];
     }
