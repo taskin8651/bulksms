@@ -99,6 +99,7 @@ class EmailController extends Controller
 
     // Template nikalo
     $template = EmailTemplate::find($request->template_id);
+    
 
     // Contacts nikalo
     $contacts = Contact::whereIn('id', $request->contacts)->get();
