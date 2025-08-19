@@ -14,6 +14,8 @@ use Gate;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
+use App\Mail\CampaignMail;
+use Illuminate\Support\Facades\Mail;
 
 class EmailController extends Controller
 {
@@ -89,13 +91,23 @@ class EmailController extends Controller
         return view('admin.emails.create', compact('contacts', 'templates'));
     }
 
-    public function store(StoreEmailRequest $request)
-    {
-        $email = Email::create($request->all());
-        $email->contacts()->sync($request->input('contacts', []));
+   public function store(StoreEmailRequest $request)
+{
+    $email = Email::create($request->all());
+    $email->contacts()->sync($request->input('contacts', []));
 
-        return redirect()->route('admin.emails.index');
+    // Template nikalo
+    $template = EmailTemplate::find($request->template_id);
+
+    // Contacts nikalo
+    $contacts = Contact::whereIn('id', $request->contacts)->get();
+
+    foreach ($contacts as $contact) {
+        Mail::to($contact->email)->send(new CampaignMail($template));
     }
+
+    return redirect()->route('admin.emails.index')->with('success', 'Emails sent successfully!');
+}
 
     public function edit(Email $email)
     {
