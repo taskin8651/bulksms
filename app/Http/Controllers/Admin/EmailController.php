@@ -91,32 +91,58 @@ class EmailController extends Controller
         return view('admin.emails.create', compact('contacts', 'templates'));
     }
 
-   public function store(StoreEmailRequest $request)
+public function store(StoreEmailRequest $request)
 {
     $email = Email::create($request->all());
     $email->contacts()->sync($request->input('contacts', []));
 
-    // Template nikalo
+    // Get template and contacts
     $template = EmailTemplate::find($request->template_id);
-
-
-    // Contacts nikalo
     $contacts = Contact::whereIn('id', $request->contacts)->get();
 
-   foreach ($contacts as $contact) {
-    try {
-        Mail::to($contact->email)->send(new CampaignMail($template));
-    } catch (\Exception $e) {
-        \Log::error('Mail error: ' . $e->getMessage());
-        dd($e->getMessage()); // yahan jo output milega wo mujhe batao
+    // Check if template exists
+    if (!$template) {
+        return redirect()->back()->with('error', 'Email template not found!');
     }
+
+    // Check if there are contacts
+    if ($contacts->isEmpty()) {
+        return redirect()->back()->with('error', 'No contacts selected!');
+    }
+
+    $successCount = 0;
+    $errorCount = 0;
+    $errors = [];
+
+    foreach ($contacts as $contact) {
+        try {
+            // Send email to each contact
+            Mail::to($contact->email)->send(new CampaignMail($template, $contact));
+            $successCount++;
+            
+            // Add a small delay to avoid overwhelming the SMTP server
+            usleep(100000); // 0.1 second delay
+            
+        } catch (\Exception $e) {
+            $errorCount++;
+            $errors[] = "Failed to send to {$contact->email}: " . $e->getMessage();
+            \Log::error('Mail error for ' . $contact->email . ': ' . $e->getMessage());
+        }
+    }
+
+    // Update email status based on results
+    $status = $errorCount > 0 ? ($successCount > 0 ? 'partially_failed' : 'failed') : 'completed';
+    $email->update(['status' => $status]);
+
+    // Prepare response message
+    $message = "Emails sent successfully! {$successCount} sent, {$errorCount} failed.";
+    
+    if (!empty($errors)) {
+        \Log::info('Email sending errors: ', $errors);
+    }
+
+    return redirect()->route('admin.emails.index')->with('success', $message);
 }
-
-
-
-    return redirect()->route('admin.emails.index')->with('success', 'Emails sent successfully!');
-}
-
     public function edit(Email $email)
     {
         abort_if(Gate::denies('email_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
