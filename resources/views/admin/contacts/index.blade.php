@@ -43,9 +43,11 @@
                     <th>
                         {{ trans('cruds.contact.fields.status') }}
                     </th>
-                    <th>
-                        {{ trans('cruds.contact.fields.organization') }}
-                    </th>
+                   <th>
+    {{ trans('cruds.contact.fields.organizer') }}
+</th>
+
+
                     <th>
                         &nbsp;
                     </th>
@@ -108,7 +110,7 @@
 { data: 'phone_number', name: 'phone_number' },
 { data: 'whatsapp_number', name: 'whatsapp_number' },
 { data: 'status', name: 'status' },
-{ data: 'organization', name: 'organization' },
+{ data: 'organizer', name: 'organizer.title' },
 { data: 'actions', name: '{{ trans('global.actions') }}' }
     ],
     orderCellsTop: true,

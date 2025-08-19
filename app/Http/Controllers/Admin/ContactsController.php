@@ -17,68 +17,59 @@ class ContactsController extends Controller
 {
     use CsvImportTrait;
 
-    public function index(Request $request)
-    {
-        abort_if(Gate::denies('contact_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+   public function index(Request $request)
+{
+    abort_if(Gate::denies('contact_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        if ($request->ajax()) {
-            $query = Contact::query()->select(sprintf('%s.*', (new Contact)->table));
-            $table = Datatables::of($query);
+    if ($request->ajax()) {
+        $query = Contact::with(['organizer'])->select(sprintf('%s.*', (new Contact)->table));
+        $table = Datatables::of($query);
 
-            $table->addColumn('placeholder', '&nbsp;');
-            $table->addColumn('actions', '&nbsp;');
+        $table->addColumn('placeholder', '&nbsp;');
+        $table->addColumn('actions', '&nbsp;');
 
-            $table->editColumn('actions', function ($row) {
-                $viewGate      = 'contact_show';
-                $editGate      = 'contact_edit';
-                $deleteGate    = 'contact_delete';
-                $crudRoutePart = 'contacts';
+        $table->editColumn('actions', function ($row) {
+            $viewGate      = 'contact_show';
+            $editGate      = 'contact_edit';
+            $deleteGate    = 'contact_delete';
+            $crudRoutePart = 'contacts';
 
-                return view('partials.datatablesActions', compact(
-                    'viewGate',
-                    'editGate',
-                    'deleteGate',
-                    'crudRoutePart',
-                    'row'
-                ));
-            });
+            return view('partials.datatablesActions', compact(
+                'viewGate',
+                'editGate',
+                'deleteGate',
+                'crudRoutePart',
+                'row'
+            ));
+        });
 
-            $table->editColumn('id', function ($row) {
-                return $row->id ? $row->id : '';
-            });
-            $table->editColumn('name', function ($row) {
-                return $row->name ? $row->name : '';
-            });
-            $table->editColumn('email', function ($row) {
-                return $row->email ? $row->email : '';
-            });
-            $table->editColumn('phone_number', function ($row) {
-                return $row->phone_number ? $row->phone_number : '';
-            });
-            $table->editColumn('whatsapp_number', function ($row) {
-                return $row->whatsapp_number ? $row->whatsapp_number : '';
-            });
-            $table->editColumn('status', function ($row) {
-                return $row->status ? Contact::STATUS_SELECT[$row->status] : '';
-            });
-            $table->editColumn('organization', function ($row) {
-                return $row->organization ? Contact::ORGANIZATION_SELECT[$row->organization] : '';
-            });
+        $table->editColumn('id', fn($row) => $row->id ?: '');
+        $table->editColumn('name', fn($row) => $row->name ?: '');
+        $table->editColumn('email', fn($row) => $row->email ?: '');
+        $table->editColumn('phone_number', fn($row) => $row->phone_number ?: '');
+        $table->editColumn('whatsapp_number', fn($row) => $row->whatsapp_number ?: '');
+        $table->editColumn('status', fn($row) => $row->status ? Contact::STATUS_SELECT[$row->status] : '');
 
-            $table->rawColumns(['actions', 'placeholder']);
+        // 👇 organizer relation
+        $table->addColumn('organizer', fn($row) => $row->organizer ? $row->organizer->title : '');
 
-            return $table->make(true);
-        }
+        $table->rawColumns(['actions', 'placeholder']);
 
-        return view('admin.contacts.index');
+        return $table->make(true);
     }
 
-    public function create()
-    {
-        abort_if(Gate::denies('contact_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+    return view('admin.contacts.index');
+}
 
-        return view('admin.contacts.create');
-    }
+
+   public function create()
+{
+    abort_if(Gate::denies('contact_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+
+    $organizers = \App\Models\Organizer::pluck('title', 'id'); // title field use ho rahi hai
+
+    return view('admin.contacts.create', compact('organizers'));
+}
 
     public function store(StoreContactRequest $request)
     {

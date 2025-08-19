@@ -64,21 +64,24 @@
                 @endif
                 <span class="help-block">{{ trans('cruds.contact.fields.status_helper') }}</span>
             </div>
-            <div class="form-group">
-                <label>{{ trans('cruds.contact.fields.organization') }}</label>
-                <select class="form-control {{ $errors->has('organization') ? 'is-invalid' : '' }}" name="organization" id="organization">
-                    <option value disabled {{ old('organization', null) === null ? 'selected' : '' }}>{{ trans('global.pleaseSelect') }}</option>
-                    @foreach(App\Models\Contact::ORGANIZATION_SELECT as $key => $label)
-                        <option value="{{ $key }}" {{ old('organization', '') === (string) $key ? 'selected' : '' }}>{{ $label }}</option>
-                    @endforeach
-                </select>
-                @if($errors->has('organization'))
-                    <div class="invalid-feedback">
-                        {{ $errors->first('organization') }}
-                    </div>
-                @endif
-                <span class="help-block">{{ trans('cruds.contact.fields.organization_helper') }}</span>
-            </div>
+           <div class="form-group">
+    <label>{{ trans('cruds.contact.fields.organizer') }}</label>
+    <select class="form-control {{ $errors->has('organizer_id') ? 'is-invalid' : '' }}" name="organizer_id" id="organizer_id">
+        <option value disabled {{ old('organizer_id', null) === null ? 'selected' : '' }}>
+            {{ trans('global.pleaseSelect') }}
+        </option>
+        @foreach($organizers as $id => $title)
+            <option value="{{ $id }}" {{ old('organizer_id') == $id ? 'selected' : '' }}>{{ $title }}</option>
+        @endforeach
+    </select>
+    @if($errors->has('organizer_id'))
+        <div class="invalid-feedback">
+            {{ $errors->first('organizer_id') }}
+        </div>
+    @endif
+    <span class="help-block">{{ trans('cruds.contact.fields.organizer_helper') }}</span>
+</div>
+
             <div class="form-group">
                 <button class="btn btn-danger" type="submit">
                     {{ trans('global.save') }}

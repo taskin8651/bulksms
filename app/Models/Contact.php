@@ -25,10 +25,7 @@ class Contact extends Model
         'blocked' => 'Blocked',
     ];
 
-    public const ORGANIZATION_SELECT = [
-        'bussiness' => 'bussiness',
-        'employee'  => 'Employee',
-    ];
+  
 
     protected $fillable = [
         'name',
@@ -40,10 +37,17 @@ class Contact extends Model
         'created_at',
         'updated_at',
         'deleted_at',
+        'organizer_id',
     ];
 
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');
     }
+
+    public function organizer()
+{
+    return $this->belongsTo(Organizer::class, 'organizer_id');
+}
+
 }

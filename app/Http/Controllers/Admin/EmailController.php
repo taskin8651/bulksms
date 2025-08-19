@@ -130,7 +130,6 @@ public function store(StoreEmailRequest $request)
             \Log::error('Mail error for ' . $contact->email . ': ' . $e->getMessage());
         }
     }
-    dd($successCount, $errorCount, $errors);
 
     // Update email status based on results
     $status = $errorCount > 0 ? ($successCount > 0 ? 'partially_failed' : 'failed') : 'completed';

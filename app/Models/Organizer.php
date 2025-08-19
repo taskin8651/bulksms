@@ -41,4 +41,10 @@ class Organizer extends Model implements HasMedia
         $this->addMediaConversion('thumb')->fit('crop', 50, 50);
         $this->addMediaConversion('preview')->fit('crop', 120, 120);
     }
+
+    public function contacts()
+{
+    return $this->hasMany(Contact::class, 'organizer_id');
+}
+
 }
