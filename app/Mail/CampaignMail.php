@@ -31,14 +31,15 @@ class CampaignMail extends Mailable
      *
      * @return $this
      */
-  public function build()
+public function build()
 {
     return $this->subject($this->template->subject)
                 ->view('emails.campaign')
                 ->with([
-                    'body' => $this->template->body, // ✅ correct column
+                    'body' => $this->template->body,   // ✅ correct field
                     'contact' => $this->contact,
                 ]);
 }
+
 
 }

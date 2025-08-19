@@ -113,7 +113,7 @@ public function store(StoreEmailRequest $request)
     $successCount = 0;
     $errorCount = 0;
     $errors = [];
-    dd($template, $contacts);
+    // dd($template, $contacts);
 
     foreach ($contacts as $contact) {
         try {
