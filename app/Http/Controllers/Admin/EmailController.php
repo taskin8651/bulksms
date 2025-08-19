@@ -102,11 +102,16 @@ class EmailController extends Controller
 
     // Contacts nikalo
     $contacts = Contact::whereIn('id', $request->contacts)->get();
-    dd($contacts);
 
     foreach ($contacts as $contact) {
+    try {
         Mail::to($contact->email)->send(new CampaignMail($template));
+    } catch (\Exception $e) {
+        dd($e->getMessage()); // exact error dikhega
     }
+}
+
+
 
     return redirect()->route('admin.emails.index')->with('success', 'Emails sent successfully!');
 }
