@@ -12,7 +12,7 @@ class SmsGatewayService
 $token = config('services.smsgateway.key');
 
 
-     $finalUrl = rtrim($url, '/') . '/send';
+$finalUrl = 'https://bulksms.scroll2earn.fun/send';
 \Log::info('SMS Request URL: ' . $finalUrl);
 
 $response = Http::withHeaders([
