@@ -30,5 +30,10 @@ return [
         'secret' => env('AWS_SECRET_ACCESS_KEY'),
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
+    'smsgateway' => [
+    'url' => env('SMS_GATEWAY_URL'),
+    'key' => env('SMS_GATEWAY_KEY'),
+],
+
 
 ];

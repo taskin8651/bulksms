@@ -8,8 +8,9 @@ class SmsGatewayService
 {
     public static function send($phone, $message)
     {
-        $url = env('SMS_GATEWAY_URL');
-        $token = env('SMS_GATEWAY_KEY');
+      $url = config('services.smsgateway.url');
+$token = config('services.smsgateway.key');
+
 
      $finalUrl = rtrim($url, '/') . '/send';
 \Log::info('SMS Request URL: ' . $finalUrl);
