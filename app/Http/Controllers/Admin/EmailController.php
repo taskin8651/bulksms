@@ -15,7 +15,9 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
 use App\Mail\CampaignMail;
+use App\Models\Organizer;
 use Illuminate\Support\Facades\Mail;
+
 
 class EmailController extends Controller
 {
@@ -80,16 +82,22 @@ class EmailController extends Controller
         return view('admin.emails.index');
     }
 
-    public function create()
-    {
-        abort_if(Gate::denies('email_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+   public function create()
+{
+    abort_if(Gate::denies('email_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $templates = EmailTemplate::pluck('template_name', 'id')->prepend(trans('global.pleaseSelect'), '');
+    $templates = EmailTemplate::pluck('template_name', 'id')
+                ->prepend(trans('global.pleaseSelect'), '');
 
-        $contacts = Contact::pluck('email', 'id');
+    // Get all contacts with their organizers
+    $contacts = Contact::with('organizer')->get();
 
-        return view('admin.emails.create', compact('contacts', 'templates'));
-    }
+    // Get all organizers for the filter dropdown
+    $organizers = Organizer::pluck('title', 'id');
+
+    return view('admin.emails.create', compact('contacts', 'templates', 'organizers'));
+}
+
 
 public function store(StoreEmailRequest $request)
 {
@@ -192,4 +200,19 @@ public function store(StoreEmailRequest $request)
 
         return response(null, Response::HTTP_NO_CONTENT);
     }
+    public function getContacts($id)
+{
+    if ($id === "all") {
+        $contacts = Contact::with('organizer')->get();
+    } else {
+        $contacts = Contact::with('organizer')
+                    ->where('organizer_id', $id)
+                    ->get();
+    }
+
+    return response()->json($contacts);
 }
+
+}
+
+

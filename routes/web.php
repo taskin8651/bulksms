@@ -129,3 +129,6 @@ Route::group(['prefix' => 'profile', 'as' => 'profile.', 'namespace' => 'Auth', 
         Route::post('profile/destroy', 'ChangePasswordController@destroy')->name('password.destroyProfile');
     }
 });
+
+Route::get('/get-contacts-by-organizer/{id}', [App\Http\Controllers\Admin\EmailController::class, 'getContacts'])
+    ->name('contacts.by.organizer');
