@@ -8,22 +8,19 @@ class SmsGatewayService
 {
     public static function send($phone, $message)
     {
-      $url = config('services.smsgateway.url');
-$token = config('services.smsgateway.key');
+     Route::get('/test-sms', function () {
+    $url = 'https://bulksms.scroll2earn.fun/send';
+    $token = '4b41c811-d6e7-4a82-aea2-0855f4cdb810';
 
+    $response = Http::withHeaders([
+        'Authorization' => 'Bearer ' . $token,
+    ])->post($url, [
+        'phone'   => '918651323192', // apna number daalo
+        'message' => 'Test message from Laravel',
+    ]);
 
-$finalUrl = 'https://bulksms.scroll2earn.fun/send';
-\Log::info('SMS Request URL: ' . $finalUrl);
+    dd($response->body());
+});
 
-$response = Http::withHeaders([
-    'Authorization' => 'Bearer ' . $token,
-])->post($finalUrl, [
-    'phone'   => $phone,
-    'message' => $message,
-]);
-
-
-
-        return $response->json();
     }
 }
