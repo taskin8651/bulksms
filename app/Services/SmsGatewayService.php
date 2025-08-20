@@ -11,12 +11,16 @@ class SmsGatewayService
         $url = env('SMS_GATEWAY_URL');
         $token = env('SMS_GATEWAY_KEY');
 
-       $response = Http::withHeaders([
+     $finalUrl = rtrim($url, '/') . '/send';
+\Log::info('SMS Request URL: ' . $finalUrl);
+
+$response = Http::withHeaders([
     'Authorization' => 'Bearer ' . $token,
-])->post(rtrim($url, '/') . '/send', [
+])->post($finalUrl, [
     'phone'   => $phone,
     'message' => $message,
 ]);
+
 
 
         return $response->json();
