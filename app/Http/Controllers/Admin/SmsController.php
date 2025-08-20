@@ -14,6 +14,7 @@ use Gate;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
+use App\Services\SmsGatewayService;
 
 class SmsController extends Controller
 {
@@ -89,14 +90,18 @@ class SmsController extends Controller
         return view('admin.smss.create', compact('contacts', 'templates'));
     }
 
-    public function store(StoreSmsRequest $request)
-    {
-        $sms = Sms::create($request->all());
-        $sms->contacts()->sync($request->input('contacts', []));
-
-        return redirect()->route('admin.smss.index');
+   public function store(StoreSmsRequest $request)
+{
+    $sms = Sms::create($request->all());
+    $sms->contacts()->sync($request->input('contacts', []));
+    // सभी contacts पर message भेजो
+    foreach ($sms->contacts as $contact) {
+        $message = $sms->template->content ?? "Default message";
+        SmsGatewayService::send($contact->phone_number, $message);
     }
 
+    return redirect()->route('admin.smss.index');
+}
     public function edit(Sms $sms)
     {
         abort_if(Gate::denies('sms_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
