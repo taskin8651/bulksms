@@ -38,6 +38,7 @@ class Contact extends Model
         'updated_at',
         'deleted_at',
         'organizer_id',
+        'created_by_id',
     ];
 
     protected function serializeDate(DateTimeInterface $date)
@@ -49,5 +50,11 @@ class Contact extends Model
 {
     return $this->belongsTo(Organizer::class, 'organizer_id');
 }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+   
 
 }

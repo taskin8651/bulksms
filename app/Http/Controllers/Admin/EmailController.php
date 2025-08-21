@@ -28,7 +28,9 @@ class EmailController extends Controller
         abort_if(Gate::denies('email_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         if ($request->ajax()) {
-            $query = Email::with(['template', 'contacts'])->select(sprintf('%s.*', (new Email)->table));
+            $query = Email::with(['template', 'contacts'])
+            ->where('created_by_id', auth()->id())
+            ->select(sprintf('%s.*', (new Email)->table));
             $table = Datatables::of($query);
 
             $table->addColumn('placeholder', '&nbsp;');
@@ -101,7 +103,10 @@ class EmailController extends Controller
 
 public function store(StoreEmailRequest $request)
 {
-    $email = Email::create($request->all());
+    $email = Email::create($request->all() + [
+    'created_by_id' => auth()->id(),
+]);
+
     $email->contacts()->sync($request->input('contacts', []));
 
     // Get template and contacts

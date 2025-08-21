@@ -22,7 +22,9 @@ class ContactsController extends Controller
     abort_if(Gate::denies('contact_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
     if ($request->ajax()) {
-        $query = Contact::with(['organizer'])->select(sprintf('%s.*', (new Contact)->table));
+        $query = Contact::with(['organizer'])
+        ->where('created_by_id', auth()->id())
+        ->select(sprintf('%s.*', (new Contact)->table));
         $table = Datatables::of($query);
 
         $table->addColumn('placeholder', '&nbsp;');
@@ -73,7 +75,10 @@ class ContactsController extends Controller
 
     public function store(StoreContactRequest $request)
     {
-        $contact = Contact::create($request->all());
+        $data = $request->all();
+    $data['created_by_id'] = auth()->id();
+
+    Contact::create($data);
 
         return redirect()->route('admin.contacts.index');
     }

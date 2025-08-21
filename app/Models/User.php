@@ -92,4 +92,16 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(Role::class);
     }
+public function contacts()
+{
+    return $this->hasMany(Contact::class, 'created_by_id');
+}
+
+public function emails()
+{
+    return $this->hasMany(Email::class, 'created_by_id');
+}
+
+
+
 }

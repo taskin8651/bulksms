@@ -28,6 +28,7 @@ class Email extends Model
         'created_at',
         'updated_at',
         'deleted_at',
+        'created_by_id',
     ];
 
     public const STATUS_SELECT = [
@@ -51,5 +52,9 @@ class Email extends Model
     public function contacts()
     {
         return $this->belongsToMany(Contact::class);
+    }
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
     }
 }
