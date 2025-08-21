@@ -6,13 +6,10 @@
             <a class="btn btn-success" href="{{ route('admin.transactions.create') }}">
                 {{ trans('global.add') }} {{ trans('cruds.transaction.title_singular') }}
             </a>
-            <button class="btn btn-warning" data-toggle="modal" data-target="#csvImportModal">
-                {{ trans('global.app_csvImport') }}
-            </button>
-            @include('csvImport.modal', ['model' => 'Transaction', 'route' => 'admin.transactions.parseCsvImport'])
         </div>
     </div>
 @endcan
+
 <div class="card">
     <div class="card-header">
         {{ trans('cruds.transaction.title_singular') }} {{ trans('global.list') }}
@@ -22,33 +19,30 @@
         <table class=" table table-bordered table-striped table-hover ajaxTable datatable datatable-Transaction">
             <thead>
                 <tr>
-                    <th width="10">
-
-                    </th>
-                    <th>
-                        {{ trans('cruds.transaction.fields.id') }}
-                    </th>
-                    <th>
-                        {{ trans('cruds.transaction.fields.wallet') }}
-                    </th>
-                    <th>
-                        &nbsp;
-                    </th>
+                    <th width="10"></th>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Balance After</th>
+                    <th>Description</th>
+                    <th>Reference</th>
+                    <th>User</th>
+                    <th>Date</th>
+                    <th>&nbsp;</th>
                 </tr>
             </thead>
         </table>
     </div>
 </div>
-
-
-
 @endsection
+
 @section('scripts')
 @parent
 <script>
-    $(function () {
+$(function () {
   let dtButtons = $.extend(true, [], $.fn.dataTable.defaults.buttons)
-@can('transaction_delete')
+
+  @can('transaction_delete')
   let deleteButtonTrans = '{{ trans('global.datatables.delete') }}';
   let deleteButton = {
     text: deleteButtonTrans,
@@ -61,7 +55,6 @@
 
       if (ids.length === 0) {
         alert('{{ trans('global.datatables.zero_selected') }}')
-
         return
       }
 
@@ -76,7 +69,7 @@
     }
   }
   dtButtons.push(deleteButton)
-@endcan
+  @endcan
 
   let dtOverrideGlobals = {
     buttons: dtButtons,
@@ -87,21 +80,19 @@
     ajax: "{{ route('admin.transactions.index') }}",
     columns: [
       { data: 'placeholder', name: 'placeholder' },
-{ data: 'id', name: 'id' },
-{ data: 'wallet', name: 'wallet' },
-{ data: 'actions', name: '{{ trans('global.actions') }}' }
+      { data: 'id', name: 'id' },
+     
+      { data: 'actions', name: '{{ trans('global.actions') }}' }
     ],
     orderCellsTop: true,
     order: [[ 1, 'desc' ]],
     pageLength: 100,
   };
   let table = $('.datatable-Transaction').DataTable(dtOverrideGlobals);
-  $('a[data-toggle="tab"]').on('shown.bs.tab click', function(e){
-      $($.fn.dataTable.tables(true)).DataTable()
-          .columns.adjust();
-  });
-  
-});
 
+  $('a[data-toggle="tab"]').on('shown.bs.tab click', function(e){
+      $($.fn.dataTable.tables(true)).DataTable().columns.adjust();
+  });
+});
 </script>
 @endsection

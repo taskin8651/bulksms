@@ -10,57 +10,60 @@ use SpreadsheetReader;
 trait CsvImportTrait
 {
     public function processCsvImport(Request $request)
-    {
-        try {
-            $filename = $request->input('filename', false);
-            $path     = storage_path('app/csv_import/' . $filename);
+{
+    try {
+        $filename = $request->input('filename', false);
+        $path     = storage_path('app/csv_import/' . $filename);
 
-            $hasHeader = $request->input('hasHeader', false);
+        $hasHeader = $request->input('hasHeader', false);
 
-            $fields = $request->input('fields', false);
-            $fields = array_flip(array_filter($fields));
+        $fields = $request->input('fields', false);
+        $fields = array_flip(array_filter($fields));
 
-            $modelName = $request->input('modelName', false);
-            $model     = "App\Models\\" . $modelName;
+        $modelName = $request->input('modelName', false);
+        $model     = "App\Models\\" . $modelName;
 
-            $reader = new SpreadsheetReader($path);
-            $insert = [];
+        $reader = new SpreadsheetReader($path);
+        $insert = [];
 
-            foreach ($reader as $key => $row) {
-                if ($hasHeader && $key == 0) {
-                    continue;
-                }
+        foreach ($reader as $key => $row) {
+            if ($hasHeader && $key == 0) {
+                continue;
+            }
 
-                $tmp = [];
-                foreach ($fields as $header => $k) {
-                    if (isset($row[$k])) {
-                        $tmp[$header] = $row[$k];
-                    }
-                }
-
-                if (count($tmp) > 0) {
-                    $insert[] = $tmp;
+            $tmp = [];
+            foreach ($fields as $header => $k) {
+                if (isset($row[$k])) {
+                    $tmp[$header] = $row[$k];
                 }
             }
 
-            $for_insert = array_chunk($insert, 100);
-
-            foreach ($for_insert as $insert_item) {
-                $model::insert($insert_item);
+            // 👇 यहाँ user id inject कर रहे हैं
+            if (count($tmp) > 0) {
+                $tmp['created_by_id'] = auth()->id();
+                $insert[] = $tmp;
             }
-
-            $rows  = count($insert);
-            $table = Str::plural($modelName);
-
-            File::delete($path);
-
-            session()->flash('message', trans('global.app_imported_rows_to_table', ['rows' => $rows, 'table' => $table]));
-
-            return redirect($request->input('redirect'));
-        } catch (\Exception $ex) {
-            throw $ex;
         }
+
+        $for_insert = array_chunk($insert, 100);
+
+        foreach ($for_insert as $insert_item) {
+            $model::insert($insert_item);
+        }
+
+        $rows  = count($insert);
+        $table = Str::plural($modelName);
+
+        File::delete($path);
+
+        session()->flash('message', trans('global.app_imported_rows_to_table', ['rows' => $rows, 'table' => $table]));
+
+        return redirect($request->input('redirect'));
+    } catch (\Exception $ex) {
+        throw $ex;
     }
+}
+
 
     public function parseCsvImport(Request $request)
     {

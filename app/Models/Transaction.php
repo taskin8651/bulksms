@@ -2,33 +2,37 @@
 
 namespace App\Models;
 
-use App\Traits\Auditable;
-use DateTimeInterface;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transaction extends Model
 {
-    use SoftDeletes, Auditable, HasFactory;
-
-    public $table = 'transactions';
-
-    protected $dates = [
-        'created_at',
-        'updated_at',
-        'deleted_at',
-    ];
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'wallet',
-        'created_at',
-        'updated_at',
-        'deleted_at',
+        'type',
+        'amount',
+        'balance_after',
+        'description',
+        'reference_id',
+        'reference_type',
+        'created_by_id',
     ];
 
-    protected function serializeDate(DateTimeInterface $date)
+    /**
+     * Transaction kis user ne create kiya
+     */
+    public function createdBy()
     {
-        return $date->format('Y-m-d H:i:s');
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    /**
+     * Polymorphic relation (Transaction kisi bhi model ka ho sakta hai, jaise Order, Payment, etc.)
+     */
+    public function reference()
+    {
+        return $this->morphTo(null, 'reference_type', 'reference_id');
     }
 }
