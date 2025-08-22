@@ -17,91 +17,17 @@ class TransactionsController extends Controller
 {
     use CsvImportTrait;
 
-   public function index(Request $request)
+    public function index()
 {
-    abort_if(Gate::denies('transaction_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+    // Sirf logged-in user ke transactions latest order me
+    $transactions = Transaction::with('createdBy')
+        ->where('created_by_id', auth()->id()) // filter
+        ->latest()
+        ->get();
 
-    if ($request->ajax()) {
-        // Remove the user filter to show all transactions, not just the authenticated user's
-        $query = Transaction::with(['created_by'])
-            ->select(sprintf('%s.*', (new Transaction)->table));
-        $table = Datatables::of($query);
-
-        $table->addColumn('placeholder', '&nbsp;');
-        $table->addColumn('actions', '&nbsp;');
-
-        $table->editColumn('actions', function ($row) {
-            $viewGate      = 'transaction_show';
-            $editGate      = 'transaction_edit';
-            $deleteGate    = 'transaction_delete';
-            $crudRoutePart = 'transactions';
-
-            return view('partials.datatablesActions', compact(
-                'viewGate',
-                'editGate',
-                'deleteGate',
-                'crudRoutePart',
-                'row'
-            ));
-        });
-
-        // ID
-        $table->editColumn('id', function ($row) {
-            return $row->id ?? '';
-        });
-
-        // Type
-       // Type
-$table->editColumn('type', function ($row) {
-    if ($row->type === 'credit') {
-        return 'Credit';
-    } elseif ($row->type === 'debit') {
-        return 'Debit';
-    }
-    return '';
-});
-
-
-        // Amount
-        $table->editColumn('amount', function ($row) {
-            return $row->amount ?? '0';
-        });
-
-        // Balance after
-        $table->editColumn('balance_after', function ($row) {
-            return $row->balance_after ?? '0';
-        });
-
-        // Description
-        $table->editColumn('description', function ($row) {
-            return $row->description ?? '';
-        });
-
-        // Reference - improved to show more meaningful information
-        $table->addColumn('reference', function ($row) {
-            if (!$row->reference_type) return '';
-            
-            $modelName = class_basename($row->reference_type);
-            return $modelName . ' #' . $row->reference_id;
-        });
-
-        // User
-        $table->addColumn('user_name', function ($row) {
-            return $row->created_by ? $row->created_by->name : '';
-        });
-
-        // Date
-        $table->editColumn('created_at', function ($row) {
-            return $row->created_at ? $row->created_at->format('Y-m-d H:i') : '';
-        });
-
-        $table->rawColumns(['actions', 'placeholder']);
-
-        return $table->make(true);
-    }
-
-    return view('admin.transactions.index');
+    return view('admin.transactions.index', compact('transactions'));
 }
+
 
     public function create()
     {
