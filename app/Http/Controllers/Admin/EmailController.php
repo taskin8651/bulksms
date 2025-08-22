@@ -17,7 +17,9 @@ use Yajra\DataTables\Facades\DataTables;
 use App\Mail\CampaignMail;
 use App\Models\Organizer;
 use Illuminate\Support\Facades\Mail;
+use App\Models\Wallet;
 
+use App\Models\Transaction;
 
 class EmailController extends Controller
 {
@@ -103,22 +105,58 @@ class EmailController extends Controller
 
 public function store(StoreEmailRequest $request)
 {
+    $userId = auth()->id();
+
+    // Get user wallet
+    $wallet = Wallet::where('created_by_id', $userId)->first();
+
+    if (!$wallet) {
+        return redirect()->back()->with('error', 'Wallet not found! Please add coins.');
+    }
+
+    // Count selected contacts
+$contactCount = count($request->contacts);
+
+// Email cost per contact (0.1 coin per email)
+$coinsNeeded = $contactCount * 0.1;
+
+    // Check balance
+    if ($wallet->balance < $coinsNeeded) {
+        return redirect()->back()->with('error', 'Insufficient balance! Please add coins.');
+    }
+
+    // Create email record
     $email = Email::create($request->all() + [
-    'created_by_id' => auth()->id(),
-]);
+        'created_by_id' => $userId,
+        'coins_used'    => $coinsNeeded,
+    ]);
 
     $email->contacts()->sync($request->input('contacts', []));
+
+    // Deduct coins from wallet
+    $wallet->balance -= $coinsNeeded;
+    $wallet->save();
+
+    // ✅ Add Transaction Record
+    Transaction::create([
+        'type'           => 'debit',
+        'amount'         => $coinsNeeded,
+        'balance_after'  => $wallet->balance,
+        'description'    => "Coins deducted for Email Campaign: {$email->campaign_name}",
+        'reference_id'   => $email->id,
+        'reference_type' => Email::class,
+        'created_by_id'  => $userId,
+    ]);
+   
 
     // Get template and contacts
     $template = EmailTemplate::find($request->template_id);
     $contacts = Contact::whereIn('id', $request->contacts)->get();
 
-    // Check if template exists
     if (!$template) {
         return redirect()->back()->with('error', 'Email template not found!');
     }
 
-    // Check if there are contacts
     if ($contacts->isEmpty()) {
         return redirect()->back()->with('error', 'No contacts selected!');
     }
@@ -126,17 +164,12 @@ public function store(StoreEmailRequest $request)
     $successCount = 0;
     $errorCount = 0;
     $errors = [];
-    // dd($template, $contacts);
 
     foreach ($contacts as $contact) {
         try {
-            // Send email to each contact
             Mail::to($contact->email)->send(new CampaignMail($template, $contact));
             $successCount++;
-            
-            // Add a small delay to avoid overwhelming the SMTP server
-            usleep(100000); // 0.1 second delay
-            
+            usleep(100000); // 0.1 sec delay
         } catch (\Exception $e) {
             $errorCount++;
             $errors[] = "Failed to send to {$contact->email}: " . $e->getMessage();
@@ -144,18 +177,19 @@ public function store(StoreEmailRequest $request)
         }
     }
 
-    // Update email status based on results
     $status = $errorCount > 0 ? ($successCount > 0 ? 'partially_failed' : 'failed') : 'completed';
     $email->update(['status' => $status]);
-    // Prepare response message
+
     $message = "Emails sent successfully! {$successCount} sent, {$errorCount} failed.";
-    
+
     if (!empty($errors)) {
         \Log::info('Email sending errors: ', $errors);
     }
 
     return redirect()->route('admin.emails.index')->with('success', $message);
 }
+
+
     public function edit(Email $email)
     {
         abort_if(Gate::denies('email_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');

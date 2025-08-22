@@ -101,7 +101,7 @@
                        name="coins_used" 
                        id="coins_used" 
                        value="{{ old('coins_used', '0') }}" 
-                       min="0">
+                       min="0" readonly>
                 @if($errors->has('coins_used'))
                     <div class="invalid-feedback">
                         {{ $errors->first('coins_used') }}
@@ -109,6 +109,18 @@
                 @endif
                 <span class="help-block">{{ trans('cruds.email.fields.coins_used_helper') }}</span>
             </div>
+            <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+            <script>
+    $(document).ready(function () {
+        $('#contacts').on('change', function () {
+            let selectedCount = $(this).val() ? $(this).val().length : 0;
+            let coinsPerContact = 0.1; // 0.1 coin per contact
+            $('#coins_used').val((selectedCount * coinsPerContact).toFixed(1)); 
+        });
+    });
+</script>
+
 
             {{-- Status --}}
             <div class="form-group">
