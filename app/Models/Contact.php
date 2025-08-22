@@ -25,8 +25,6 @@ class Contact extends Model
         'blocked' => 'Blocked',
     ];
 
-  
-
     protected $fillable = [
         'name',
         'email',
@@ -34,9 +32,6 @@ class Contact extends Model
         'whatsapp_number',
         'status',
         'organization',
-        'created_at',
-        'updated_at',
-        'deleted_at',
         'organizer_id',
         'created_by_id',
     ];
@@ -47,14 +42,12 @@ class Contact extends Model
     }
 
     public function organizer()
-{
-    return $this->belongsTo(Organizer::class, 'organizer_id');
-}
+    {
+        return $this->belongsTo(Organizer::class, 'organizer_id');
+    }
+
     public function createdBy()
     {
         return $this->belongsTo(User::class, 'created_by_id');
     }
-
-   
-
 }

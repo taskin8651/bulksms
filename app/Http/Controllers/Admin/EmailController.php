@@ -91,16 +91,19 @@ class EmailController extends Controller
     abort_if(Gate::denies('email_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
     $templates = EmailTemplate::pluck('template_name', 'id')
-                ->prepend(trans('global.pleaseSelect'), '');
+        ->prepend(trans('global.pleaseSelect'), '');
 
-    // Get all contacts with their organizers
-    $contacts = Contact::with('organizer')->get();
+    // Sirf current user ke contacts fetch karo
+    $contacts = Contact::with('organizer')
+        ->where('created_by_id', auth()->id())
+        ->get();
 
-    // Get all organizers for the filter dropdown
+    // Organizers list
     $organizers = Organizer::pluck('title', 'id');
 
     return view('admin.emails.create', compact('contacts', 'templates', 'organizers'));
 }
+
 
 
 public function store(StoreEmailRequest $request)
@@ -241,13 +244,14 @@ $coinsNeeded = $contactCount * 0.1;
     }
     public function getContacts($id)
 {
-    if ($id === "all") {
-        $contacts = Contact::with('organizer')->get();
-    } else {
-        $contacts = Contact::with('organizer')
-                    ->where('organizer_id', $id)
-                    ->get();
+    $query = Contact::with('organizer')
+        ->where('created_by_id', auth()->id());
+
+    if ($id !== "all") {
+        $query->where('organizer_id', $id);
     }
+
+    $contacts = $query->get();
 
     return response()->json($contacts);
 }
