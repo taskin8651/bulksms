@@ -1,5 +1,6 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.admin')
+@section('content')
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -23,7 +24,6 @@
             background-color: #f5f7fb;
             color: #333;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            padding: 2rem;
         }
         
         .email-template-card {
@@ -352,8 +352,7 @@
                                         
                                         <!-- Hidden input field for body content -->
                                         <div class="hidden-body-field">
-                                            <label for="body" class="form-label">Body Content (HTML)</label>
-                                            <textarea class="form-control" id="body" name="body" rows="6" readonly></textarea>
+                                            <textarea class="form-control d-none" id="body" name="body" rows="6" readonly ></textarea>
                                         </div>
                                         
                                         <div class="editor-actions">
@@ -440,14 +439,14 @@
                 </div>
                 
                 <!-- Data Preview Section -->
-                <div class="mt-4">
+                <!-- <div class="mt-4">
                     <h4>Form Data Preview</h4>
                     <div class="data-preview">
                         <div><strong>Template Name:</strong> <span id="data-template-name"></span></div>
                         <div><strong>Subject:</strong> <span id="data-subject"></span></div>
                         <div><strong>Body Content:</strong> <span id="data-body"></span></div>
                     </div>
-                </div>
+                </div> -->
             </div>
         </div>
     </div>
@@ -783,5 +782,4 @@
             updateBodyInput();
         });
     </script>
-</body>
-</html>
+@endsection
