@@ -72,23 +72,46 @@ class EmailTemplateController extends Controller
         return view('admin.emailTemplates.create');
     }
 
-    public function store(StoreEmailTemplateRequest $request)
+   public function store(StoreEmailTemplateRequest $request)
 {
     $userId = auth()->id(); // login user ka id
 
-    // Email Template create with created_by_id
-    $emailTemplate = EmailTemplate::create($request->all() + [
-        'created_by_id' => $userId,
-    ]);
+    try {
+        // Email Template create with created_by_id
+        $emailTemplate = EmailTemplate::create($request->all() + [
+            'created_by_id' => $userId,
+        ]);
 
-    // Agar media files add kiye hain to unko attach karo
-    if ($media = $request->input('ck-media', false)) {
-        Media::whereIn('id', $media)->update(['model_id' => $emailTemplate->id]);
+        // Agar media files add kiye hain to unko attach karo
+        if ($media = $request->input('ck-media', false)) {
+            Media::whereIn('id', $media)->update(['model_id' => $emailTemplate->id]);
+        }
+
+        // AJAX request ke liye JSON response
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Email Template created successfully!',
+                'template_id' => $emailTemplate->id,
+            ]);
+        }
+
+        // Normal form submit ke liye redirect
+        return redirect()->route('admin.email-templates.index')
+                         ->with('success', 'Email Template created successfully!');
+
+    } catch (\Exception $e) {
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
+
+        return back()->withErrors($e->getMessage());
     }
-
-    return redirect()->route('admin.email-templates.index')
-                     ->with('success', 'Email Template created successfully!');
 }
+
     public function edit(EmailTemplate $emailTemplate)
     {
         abort_if(Gate::denies('email_template_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
