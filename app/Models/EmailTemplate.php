@@ -30,6 +30,7 @@ class EmailTemplate extends Model implements HasMedia
         'created_at',
         'updated_at',
         'deleted_at',
+        'created_by_id',
     ];
 
     protected function serializeDate(DateTimeInterface $date)
@@ -41,5 +42,9 @@ class EmailTemplate extends Model implements HasMedia
     {
         $this->addMediaConversion('thumb')->fit('crop', 50, 50);
         $this->addMediaConversion('preview')->fit('crop', 120, 120);
+    }
+    public function created_by()
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
     }
 }

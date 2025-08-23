@@ -24,7 +24,9 @@ class EmailTemplateController extends Controller
         abort_if(Gate::denies('email_template_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
         if ($request->ajax()) {
-            $query = EmailTemplate::query()->select(sprintf('%s.*', (new EmailTemplate)->table));
+            $query = EmailTemplate::query()
+             ->where('created_by_id', auth()->id())
+            ->select(sprintf('%s.*', (new EmailTemplate)->table));
             $table = Datatables::of($query);
 
             $table->addColumn('placeholder', '&nbsp;');
@@ -71,16 +73,22 @@ class EmailTemplateController extends Controller
     }
 
     public function store(StoreEmailTemplateRequest $request)
-    {
-        $emailTemplate = EmailTemplate::create($request->all());
+{
+    $userId = auth()->id(); // login user ka id
 
-        if ($media = $request->input('ck-media', false)) {
-            Media::whereIn('id', $media)->update(['model_id' => $emailTemplate->id]);
-        }
+    // Email Template create with created_by_id
+    $emailTemplate = EmailTemplate::create($request->all() + [
+        'created_by_id' => $userId,
+    ]);
 
-        return redirect()->route('admin.email-templates.index');
+    // Agar media files add kiye hain to unko attach karo
+    if ($media = $request->input('ck-media', false)) {
+        Media::whereIn('id', $media)->update(['model_id' => $emailTemplate->id]);
     }
 
+    return redirect()->route('admin.email-templates.index')
+                     ->with('success', 'Email Template created successfully!');
+}
     public function edit(EmailTemplate $emailTemplate)
     {
         abort_if(Gate::denies('email_template_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
