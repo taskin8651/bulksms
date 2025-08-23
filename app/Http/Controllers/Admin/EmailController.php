@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Models\Wallet;
 
 use App\Models\Transaction;
+use App\Models\EmailSetup;
 
 
 class EmailController extends Controller
