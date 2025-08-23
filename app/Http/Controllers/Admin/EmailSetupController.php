@@ -92,12 +92,15 @@ class EmailSetupController extends Controller
         return view('admin.emailSetups.create');
     }
 
-    public function store(StoreEmailSetupRequest $request)
-    {
-        $emailSetup = EmailSetup::create($request->all());
+   public function store(StoreEmailSetupRequest $request)
+{
+    $data = $request->all();
+    $data['created_by_id'] = auth()->id(); // current user id add kar diya
 
-        return redirect()->route('admin.email-setups.index');
-    }
+    $emailSetup = EmailSetup::create($data);
+
+    return redirect()->route('admin.email-setups.index');
+}
 
     public function edit(EmailSetup $emailSetup)
     {
