@@ -134,6 +134,7 @@ public function store(StoreEmailRequest $request)
     Config::set('mail.from.address', $mailConfig->from_email);
     Config::set('mail.from.name', $mailConfig->from_name);
 
+    
     // Create Email Campaign
     $email = Email::create($request->all() + [
         'created_by_id' => $userId,
