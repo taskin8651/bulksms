@@ -18,73 +18,53 @@ class WhatsAppSetupController extends Controller
     use CsvImportTrait;
 
     public function index(Request $request)
-    {
-        abort_if(Gate::denies('whats_app_setup_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+{
+    abort_if(Gate::denies('whats_app_setup_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        if ($request->ajax()) {
-            $query = WhatsAppSetup::query()->select(sprintf('%s.*', (new WhatsAppSetup)->table));
-            $table = Datatables::of($query);
+    // Normal pagination (no datatable)
+    $setups = WhatsAppSetup::orderBy('id', 'desc')->paginate(25);
 
-            $table->addColumn('placeholder', '&nbsp;');
-            $table->addColumn('actions', '&nbsp;');
+    return view('admin.whatsAppSetups.index', compact('setups'));
+}
 
-            $table->editColumn('actions', function ($row) {
-                $viewGate      = 'whats_app_setup_show';
-                $editGate      = 'whats_app_setup_edit';
-                $deleteGate    = 'whats_app_setup_delete';
-                $crudRoutePart = 'whats-app-setups';
 
-                return view('partials.datatablesActions', compact(
-                    'viewGate',
-                    'editGate',
-                    'deleteGate',
-                    'crudRoutePart',
-                    'row'
-                ));
-            });
+   public function create()
+{
+    abort_if(Gate::denies('whats_app_setup_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-            $table->editColumn('id', function ($row) {
-                return $row->id ? $row->id : '';
-            });
-            $table->editColumn('title', function ($row) {
-                return $row->title ? $row->title : '';
-            });
+    $provider_names = WhatsAppSetup::PROVIDER_NAME_SELECT;
 
-            $table->rawColumns(['actions', 'placeholder']);
+    return view('admin.whatsAppSetups.create', compact('provider_names'));
+}
 
-            return $table->make(true);
-        }
+public function store(StoreWhatsAppSetupRequest $request)
+{
+    $data = $request->all();
+    $data['created_by_id'] = auth()->id();
 
-        return view('admin.whatsAppSetups.index');
-    }
+    WhatsAppSetup::create($data);
 
-    public function create()
-    {
-        abort_if(Gate::denies('whats_app_setup_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+    return redirect()->route('admin.whats-app-setups.index')
+        ->with('success', 'WhatsApp Setup Created Successfully');
+}
 
-        return view('admin.whatsAppSetups.create');
-    }
 
-    public function store(StoreWhatsAppSetupRequest $request)
-    {
-        $whatsAppSetup = WhatsAppSetup::create($request->all());
+   public function edit(WhatsAppSetup $whatsAppSetup)
+{
+    abort_if(Gate::denies('whats_app_setup_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        return redirect()->route('admin.whats-app-setups.index');
-    }
+    return view('admin.whatsAppSetups.edit', compact('whatsAppSetup'));
+}
 
-    public function edit(WhatsAppSetup $whatsAppSetup)
-    {
-        abort_if(Gate::denies('whats_app_setup_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+public function update(UpdateWhatsAppSetupRequest $request, WhatsAppSetup $whatsAppSetup)
+{
+    // Only fillable fields update होंगे
+    $whatsAppSetup->update($request->validated());
 
-        return view('admin.whatsAppSetups.edit', compact('whatsAppSetup'));
-    }
-
-    public function update(UpdateWhatsAppSetupRequest $request, WhatsAppSetup $whatsAppSetup)
-    {
-        $whatsAppSetup->update($request->all());
-
-        return redirect()->route('admin.whats-app-setups.index');
-    }
+    return redirect()
+        ->route('admin.whats-app-setups.index')
+        ->with('success', 'WhatsApp setup updated successfully');
+}
 
     public function show(WhatsAppSetup $whatsAppSetup)
     {

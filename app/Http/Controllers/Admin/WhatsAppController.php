@@ -14,6 +14,7 @@ use Gate;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
+use App\Jobs\SendWhatsAppBulkMessage;
 
 class WhatsAppController extends Controller
 {
@@ -78,11 +79,12 @@ class WhatsAppController extends Controller
         return view('admin.whatsApps.index');
     }
 
-    public function create()
+   public function create()
     {
         abort_if(Gate::denies('whats_app_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $templates = WhatsAppTemplate::pluck('template_name', 'id')->prepend(trans('global.pleaseSelect'), '');
+        $templates = WhatsAppTemplate::pluck('template_name', 'id')
+            ->prepend('Please select', '');
 
         $contacts = Contact::pluck('whatsapp_number', 'id');
 
@@ -91,32 +93,43 @@ class WhatsAppController extends Controller
 
     public function store(StoreWhatsAppRequest $request)
     {
-        $whatsApp = WhatsApp::create($request->all());
+        // Create WhatsApp campaign
+        $whatsApp = WhatsApp::create($request->validated());
+
+        // Attach selected contacts
         $whatsApp->contacts()->sync($request->input('contacts', []));
 
-        return redirect()->route('admin.whats-apps.index');
+        // Dispatch background job to send messages
+        SendWhatsAppBulkMessage::dispatch($whatsApp);
+
+        return redirect()->route('admin.whats-apps.index')
+            ->with('success', 'WhatsApp campaign created and queued for sending.');
     }
 
-    public function edit(WhatsApp $whatsApp)
-    {
-        abort_if(Gate::denies('whats_app_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+   public function edit(WhatsApp $whatsApp)
+{
+    abort_if(Gate::denies('whats_app_edit'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        $templates = WhatsAppTemplate::pluck('template_name', 'id')->prepend(trans('global.pleaseSelect'), '');
+    $templates = WhatsAppTemplate::pluck('template_name', 'id')
+        ->prepend(trans('global.pleaseSelect'), '');
 
-        $contacts = Contact::pluck('whatsapp_number', 'id');
+    $contacts = Contact::pluck('whatsapp_number', 'id');
 
-        $whatsApp->load('template', 'contacts');
+    $whatsApp->load('contacts');
 
-        return view('admin.whatsApps.edit', compact('contacts', 'templates', 'whatsApp'));
-    }
+    return view('admin.whatsApps.edit', compact('whatsApp', 'contacts', 'templates'));
+}
 
-    public function update(UpdateWhatsAppRequest $request, WhatsApp $whatsApp)
-    {
-        $whatsApp->update($request->all());
-        $whatsApp->contacts()->sync($request->input('contacts', []));
+public function update(UpdateWhatsAppRequest $request, WhatsApp $whatsApp)
+{
+    $whatsApp->update($request->validated());
 
-        return redirect()->route('admin.whats-apps.index');
-    }
+    $whatsApp->contacts()->sync($request->input('contacts', []));
+
+    return redirect()->route('admin.whats-apps.index')
+        ->with('success', 'WhatsApp campaign updated successfully.');
+}
+
 
     public function show(WhatsApp $whatsApp)
     {

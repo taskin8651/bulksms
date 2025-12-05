@@ -28,6 +28,10 @@ class WhatsApp extends Model
         'created_at',
         'updated_at',
         'deleted_at',
+        'scheduled_at',
+        'setup_id',
+        'created_by_id',
+        'is_broadcast',
     ];
 
     public const STATUS_SELECT = [

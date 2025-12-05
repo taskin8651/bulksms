@@ -1,120 +1,134 @@
 @extends('layouts.admin')
+
 @section('content')
 
-<div class="card">
-    <div class="card-header">
-        {{ trans('global.create') }} {{ trans('cruds.whatsAppTemplate.title_singular') }}
-    </div>
+<div class="container">
+    <div class="card shadow-sm">
+        
+        <div class="card-header">
+            <h3 class="card-title">Create WhatsApp Template</h3>
+        </div>
 
-    <div class="card-body">
-        <form method="POST" action="{{ route("admin.whats-app-templates.store") }}" enctype="multipart/form-data">
-            @csrf
-            <div class="form-group">
-                <label class="required" for="template_name">{{ trans('cruds.whatsAppTemplate.fields.template_name') }}</label>
-                <input class="form-control {{ $errors->has('template_name') ? 'is-invalid' : '' }}" type="text" name="template_name" id="template_name" value="{{ old('template_name', '') }}" required>
-                @if($errors->has('template_name'))
-                    <div class="invalid-feedback">
-                        {{ $errors->first('template_name') }}
-                    </div>
-                @endif
-                <span class="help-block">{{ trans('cruds.whatsAppTemplate.fields.template_name_helper') }}</span>
-            </div>
-            <div class="form-group">
-                <label class="required" for="subject">{{ trans('cruds.whatsAppTemplate.fields.subject') }}</label>
-                <input class="form-control {{ $errors->has('subject') ? 'is-invalid' : '' }}" type="text" name="subject" id="subject" value="{{ old('subject', '') }}" required>
-                @if($errors->has('subject'))
-                    <div class="invalid-feedback">
-                        {{ $errors->first('subject') }}
-                    </div>
-                @endif
-                <span class="help-block">{{ trans('cruds.whatsAppTemplate.fields.subject_helper') }}</span>
-            </div>
-            <div class="form-group">
-                <label for="body">{{ trans('cruds.whatsAppTemplate.fields.body') }}</label>
-                <textarea class="form-control ckeditor {{ $errors->has('body') ? 'is-invalid' : '' }}" name="body" id="body">{!! old('body') !!}</textarea>
-                @if($errors->has('body'))
-                    <div class="invalid-feedback">
-                        {{ $errors->first('body') }}
-                    </div>
-                @endif
-                <span class="help-block">{{ trans('cruds.whatsAppTemplate.fields.body_helper') }}</span>
-            </div>
-            <div class="form-group">
-                <button class="btn btn-danger" type="submit">
-                    {{ trans('global.save') }}
-                </button>
-            </div>
-        </form>
+        <div class="card-body">
+
+            <form method="POST" 
+                  action="{{ route('admin.whats-app-templates.store') }}" 
+                  enctype="multipart/form-data">
+                @csrf
+
+                {{-- Template Name --}}
+                <div class="mb-3">
+                    <label for="template_name" class="form-label">
+                        Template Name <span class="text-danger">*</span>
+                    </label>
+
+                    <input type="text" 
+                           id="template_name" 
+                           name="template_name"
+                           value="{{ old('template_name') }}"
+                           class="form-control @error('template_name') is-invalid @enderror"
+                           required>
+
+                    @error('template_name')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                {{-- Subject --}}
+                <div class="mb-3">
+                    <label for="subject" class="form-label">
+                        Subject <span class="text-danger">*</span>
+                    </label>
+
+                    <input type="text" 
+                           id="subject" 
+                           name="subject"
+                           value="{{ old('subject') }}"
+                           class="form-control @error('subject') is-invalid @enderror"
+                           required>
+
+                    @error('subject')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                {{-- Body --}}
+                <div class="mb-3">
+                    <label for="body" class="form-label">Body</label>
+
+                    <textarea id="body" 
+                              name="body"
+                              class="form-control ckeditor @error('body') is-invalid @enderror">{{ old('body') }}</textarea>
+
+                    @error('body')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
+                </div>
+
+                {{-- Submit --}}
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        Save Template
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
     </div>
 </div>
 
-
-
 @endsection
+
 
 @section('scripts')
 <script>
-    $(document).ready(function () {
-  function SimpleUploadAdapter(editor) {
-    editor.plugins.get('FileRepository').createUploadAdapter = function(loader) {
-      return {
-        upload: function() {
-          return loader.file
-            .then(function (file) {
-              return new Promise(function(resolve, reject) {
-                // Init request
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', '{{ route('admin.whats-app-templates.storeCKEditorImages') }}', true);
-                xhr.setRequestHeader('x-csrf-token', window._token);
-                xhr.setRequestHeader('Accept', 'application/json');
-                xhr.responseType = 'json';
+    $(function () {
 
-                // Init listeners
-                var genericErrorText = `Couldn't upload file: ${ file.name }.`;
-                xhr.addEventListener('error', function() { reject(genericErrorText) });
-                xhr.addEventListener('abort', function() { reject() });
-                xhr.addEventListener('load', function() {
-                  var response = xhr.response;
+        function SimpleUploadAdapter(editor) {
+            editor.plugins.get('FileRepository').createUploadAdapter = function (loader) {
+                return {
+                    upload: function () {
+                        return loader.file.then(function (file) {
+                            return new Promise(function (resolve, reject) {
 
-                  if (!response || xhr.status !== 201) {
-                    return reject(response && response.message ? `${genericErrorText}\n${xhr.status} ${response.message}` : `${genericErrorText}\n ${xhr.status} ${xhr.statusText}`);
-                  }
+                                var xhr = new XMLHttpRequest();
+                                xhr.open('POST', '{{ route('admin.whats-app-templates.storeCKEditorImages') }}', true);
+                                xhr.setRequestHeader('x-csrf-token', window._token);
+                                xhr.responseType = 'json';
 
-                  $('form').append('<input type="hidden" name="ck-media[]" value="' + response.id + '">');
+                                xhr.onload = function () {
+                                    var response = xhr.response;
 
-                  resolve({ default: response.url });
-                });
+                                    if (xhr.status !== 201) {
+                                        return reject(response && response.message ? response.message : "Upload error");
+                                    }
 
-                if (xhr.upload) {
-                  xhr.upload.addEventListener('progress', function(e) {
-                    if (e.lengthComputable) {
-                      loader.uploadTotal = e.total;
-                      loader.uploaded = e.loaded;
+                                    $('form').append('<input type="hidden" name="ck-media[]" value="' + response.id + '">');
+                                    resolve({ default: response.url });
+                                };
+
+                                xhr.onerror = function () { reject("Upload error"); };
+                                xhr.onabort = function () { reject(); };
+
+                                var data = new FormData();
+                                data.append('upload', file);
+                                data.append('crud_id', 0);
+                                xhr.send(data);
+
+                            });
+                        });
                     }
-                  });
-                }
-
-                // Send request
-                var data = new FormData();
-                data.append('upload', file);
-                data.append('crud_id', '{{ $whatsAppTemplate->id ?? 0 }}');
-                xhr.send(data);
-              });
-            })
+                };
+            }
         }
-      };
-    }
-  }
 
-  var allEditors = document.querySelectorAll('.ckeditor');
-  for (var i = 0; i < allEditors.length; ++i) {
-    ClassicEditor.create(
-      allEditors[i], {
-        extraPlugins: [SimpleUploadAdapter]
-      }
-    );
-  }
-});
+        document.querySelectorAll('.ckeditor').forEach((el) => {
+            ClassicEditor.create(el, {
+                extraPlugins: [SimpleUploadAdapter],
+            });
+        });
+
+    });
 </script>
-
 @endsection

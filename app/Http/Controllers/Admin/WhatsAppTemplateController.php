@@ -63,23 +63,26 @@ class WhatsAppTemplateController extends Controller
         return view('admin.whatsAppTemplates.index');
     }
 
-    public function create()
-    {
-        abort_if(Gate::denies('whats_app_template_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+   public function create()
+{
+    abort_if(Gate::denies('whats_app_template_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
-        return view('admin.whatsAppTemplates.create');
+    return view('admin.whatsAppTemplates.create');
+}
+
+public function store(StoreWhatsAppTemplateRequest $request)
+{
+    $template = WhatsAppTemplate::create($request->validated());
+
+    // Attach CKEditor uploaded media
+    if ($media = $request->input('ck-media', false)) {
+        Media::whereIn('id', $media)->update(['model_id' => $template->id]);
     }
 
-    public function store(StoreWhatsAppTemplateRequest $request)
-    {
-        $whatsAppTemplate = WhatsAppTemplate::create($request->all());
+    return redirect()->route('admin.whats-app-templates.index')
+                     ->with('success', 'Template created successfully.');
+}
 
-        if ($media = $request->input('ck-media', false)) {
-            Media::whereIn('id', $media)->update(['model_id' => $whatsAppTemplate->id]);
-        }
-
-        return redirect()->route('admin.whats-app-templates.index');
-    }
 
     public function edit(WhatsAppTemplate $whatsAppTemplate)
     {
