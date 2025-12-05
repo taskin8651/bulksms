@@ -5,7 +5,7 @@ $signature = $_SERVER['HTTP_X_HUB_SIGNATURE'] ?? '';
 $secret = 'mysecret'; // optional
 
 // Go to your project folder
-$projectRoot = '/home/smartuni/businessbarhega.in';
+$projectRoot = '/home/smartuni/public_html/businessbarhega.in';
 
 chdir($projectRoot);
 
