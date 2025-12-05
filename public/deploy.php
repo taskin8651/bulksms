@@ -2,7 +2,7 @@
 
 // SECURITY: Add your GitHub secret if needed
 $signature = $_SERVER['HTTP_X_HUB_SIGNATURE'] ?? '';
-$secret = 'mysecret'; // optional
+$secret = ''; // optional
 
 // Go to your project folder
 $projectRoot = '/home/smartuni/public_html/businessbarhega.in';
