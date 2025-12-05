@@ -89,137 +89,114 @@ class EmailController extends Controller
         return view('admin.emails.index');
     }
 
-   public function create()
+ public function create()
 {
     abort_if(Gate::denies('email_create'), Response::HTTP_FORBIDDEN, '403 Forbidden');
 
+    // All templates
     $templates = EmailTemplate::pluck('template_name', 'id')
         ->prepend(trans('global.pleaseSelect'), '');
 
-    // Sirf current user ke contacts fetch karo
+    // Fetch only user's contacts
     $contacts = Contact::with('organizer')
         ->where('created_by_id', auth()->id())
         ->get();
 
-    // Organizers list
-    $organizers = Organizer::pluck('title', 'id');
-
-    return view('admin.emails.create', compact('contacts', 'templates', 'organizers'));
+    return view('admin.emails.create', compact('contacts', 'templates'));
 }
-
 
 
 public function store(StoreEmailRequest $request)
 {
     $userId = auth()->id();
 
-    // Get user wallet
-    $wallet = Wallet::where('created_by_id', $userId)->first();
+    // Get Active Email Setup
+    $mailConfig = EmailSetup::where('created_by_id', $userId)
+        ->where('status', 1)
+        ->first();
 
-    if (!$wallet) {
-        return redirect()->back()->with('error', 'Wallet not found! Please add coins.');
-    }
-
-    // Count selected contacts
-    $contactCount = count($request->contacts);
-
-    // Email cost per contact (0.1 coin per email)
-    $coinsNeeded = $contactCount * 0.1;
-
-    // Check balance
-    if ($wallet->balance < $coinsNeeded) {
-        return redirect()->back()->with('error', 'Insufficient balance! Please add coins.');
-    }
-
-    // ✅ Find active email setup for this user
-    $mailConfig = EmailSetup::where('created_by_id', $userId)->where('status', 1)->first();
     if (!$mailConfig) {
-        return redirect()->back()->with('error', 'No active email setup found!');
+        return back()->with('error', 'No active email setup found!');
     }
 
-    // ✅ Apply dynamic mail configuration
-    Config::set('mail.mailers.smtp', [
+    // Apply Dynamic SMTP Settings
+    Config::set('mail.mailers.dynamic_smtp', [
         'transport'  => 'smtp',
         'host'       => $mailConfig->host,
-        'port'       => $mailConfig->port,
-        'encryption' => $mailConfig->encryption,
+        'port'       => (int) $mailConfig->port,
+        'encryption' => $mailConfig->encryption ?: null,
         'username'   => $mailConfig->username,
         'password'   => $mailConfig->password,
-        'timeout'    => null,
-        'auth_mode'  => null,
+        'timeout'    => 10,
     ]);
+// dd(['mailConfig' => $mailConfig]);
+    // Set FROM email
+    Config::set('mail.from.address', $mailConfig->from_email);
+    Config::set('mail.from.name', $mailConfig->from_name);
 
-    Config::set('mail.from', [
-        'address' => $mailConfig->from_email,
-        'name'    => $mailConfig->from_name,
-    ]);
-
-    // ✅ Create email campaign record
+    // Create Email Campaign
     $email = Email::create($request->all() + [
         'created_by_id' => $userId,
-        'coins_used'    => $coinsNeeded,
+        'status'        => 'pending',
     ]);
 
     $email->contacts()->sync($request->input('contacts', []));
 
-    // Deduct coins from wallet
-    $wallet->balance -= $coinsNeeded;
-    $wallet->save();
-
-    // ✅ Add Transaction Record
-    Transaction::create([
-        'type'           => 'debit',
-        'amount'         => $coinsNeeded,
-        'balance_after'  => $wallet->balance,
-        'description'    => "Coins deducted for Email Campaign: {$email->campaign_name}",
-        'reference_id'   => $email->id,
-        'reference_type' => Email::class,
-        'created_by_id'  => $userId,
-    ]);
-
-    // Get template and contacts
+    // Template + Contacts
     $template = EmailTemplate::find($request->template_id);
     $contacts = Contact::whereIn('id', $request->contacts)->get();
 
     if (!$template) {
-        return redirect()->back()->with('error', 'Email template not found!');
+        return back()->with('error', 'Email template not found!');
     }
 
     if ($contacts->isEmpty()) {
-        return redirect()->back()->with('error', 'No contacts selected!');
+        return back()->with('error', 'No contacts selected!');
     }
+    
 
+    // Sending
     $successCount = 0;
     $errorCount   = 0;
     $errors       = [];
 
     foreach ($contacts as $contact) {
+
         try {
-            Mail::to($contact->email)->send(new CampaignMail($template, $contact));
+
+            Mail::mailer('dynamic_smtp')            // 💥 IMPORTANT: custom mailer
+                ->to($contact->email)
+                ->send(new CampaignMail($template, $contact));
+
             $successCount++;
+
             usleep(100000); // 0.1 sec delay
+
         } catch (\Exception $e) {
             $errorCount++;
             $errors[] = "Failed to send to {$contact->email}: " . $e->getMessage();
-            \Log::error('Mail error for ' . $contact->email . ': ' . $e->getMessage());
         }
     }
 
-    // ✅ Update email campaign status
-    $status = $errorCount > 0 
-                ? ($successCount > 0 ? 'partially_failed' : 'failed') 
+    // Final Status
+    $status = $errorCount > 0
+                ? ($successCount > 0 ? 'partially_failed' : 'failed')
                 : 'completed';
 
     $email->update(['status' => $status]);
 
-    $message = "Emails sent successfully! {$successCount} sent, {$errorCount} failed.";
-
+    $msg = "Emails processed! Sent: {$successCount}, Failed: {$errorCount}";
+// dd($msg);
+    // Optional: Show errors if any
     if (!empty($errors)) {
-        \Log::info('Email sending errors: ', $errors);
+        return redirect()->route('admin.emails.index')
+            ->with('error', implode("<br>", $errors));
     }
 
-    return redirect()->route('admin.emails.index')->with('success', $message);
+    return redirect()->route('admin.emails.index')->with('success', $msg);
 }
+
+
 
     public function edit(Email $email)
     {
