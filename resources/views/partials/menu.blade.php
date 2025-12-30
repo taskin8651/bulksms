@@ -232,6 +232,15 @@
                             </a>
                         </li>
                     @endcan
+                    @can('chatbot_rule_access')
+    <li class="c-sidebar-nav-item">
+        <a href="{{ route('admin.chatbot.rules.index') }}" class="c-sidebar-nav-link {{ request()->is('admin/chatbot-rules') || request()->is('admin/chatbot-rules/*') ? 'c-active' : '' }}">
+            <i class="fa-fw fas fa-robot c-sidebar-nav-icon"></i>
+            Chatbot Rules
+        </a>
+    </li>
+@endcan
+
                 </ul>
             </li>
         @endcan

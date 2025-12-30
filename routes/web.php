@@ -1,4 +1,5 @@
 <?php
+use App\Http\Controllers\Admin\ChatbotRuleController;
 
 Route::redirect('/', '/login');
 Route::get('/home', function () {
@@ -119,6 +120,25 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     Route::post('organizers/parse-csv-import', 'OrganizerController@parseCsvImport')->name('organizers.parseCsvImport');
     Route::post('organizers/process-csv-import', 'OrganizerController@processCsvImport')->name('organizers.processCsvImport');
     Route::resource('organizers', 'OrganizerController');
+    
+    // Chatbot Rules
+    Route::get('chatbot-rules', [ChatbotRuleController::class, 'index'])->name('chatbot.rules.index');
+    Route::get('chatbot-rules/create', [ChatbotRuleController::class, 'create'])->name('chatbot.rules.create');
+    Route::post('chatbot-rules', [ChatbotRuleController::class, 'store'])->name('chatbot.rules.store');
+    Route::get('chatbot-rules/{rule}/edit', [ChatbotRuleController::class, 'edit'])->name('chatbot.rules.edit');
+    Route::put('chatbot-rules/{rule}', [ChatbotRuleController::class, 'update'])->name('chatbot.rules.update');
+    Route::delete('chatbot-rules/{rule}', [ChatbotRuleController::class, 'destroy'])->name('chatbot.rules.destroy');
+
+     // CKEditor media upload
+    Route::post('chatbot-rules/ckmedia', [ChatbotRuleController::class, 'storeCKEditorImages'])
+        ->name('chatbot.rules.storeCKEditorImages');
+
+       Route::get('chatbot/test', [ChatbotRuleController::class, 'testPage'])
+    ->name('chatbot.rules.testPage');
+Route::post('chatbot/test', [ChatbotRuleController::class, 'testBot'])
+    ->name('chatbot.rules.test');
+
+
 });
 Route::group(['prefix' => 'profile', 'as' => 'profile.', 'namespace' => 'Auth', 'middleware' => ['auth']], function () {
     // Change password

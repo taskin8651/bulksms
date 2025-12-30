@@ -9,10 +9,10 @@ use Illuminate\Http\Response;
 
 class StoreContactRequest extends FormRequest
 {
-    public function authorize()
-    {
-        return Gate::allows('contact_create');
-    }
+    // public function authorize()
+    // {
+    //     return Gate::allows('contact_create');
+    // }
 
     public function rules()
     {

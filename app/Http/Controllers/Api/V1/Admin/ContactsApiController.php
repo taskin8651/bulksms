@@ -13,21 +13,37 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ContactsApiController extends Controller
 {
-    public function index()
-    {
-        abort_if(Gate::denies('contact_access'), Response::HTTP_FORBIDDEN, '403 Forbidden');
+    public function index(Request $request)
+{
+    $user = $request->user(); // logged-in user
 
-        return new ContactResource(Contact::all());
+    $contacts = Contact::where('created_by_id', $user->id)->get();
+
+    return response()->json([
+        'data' => $contacts
+    ]);
+}
+
+   public function store(StoreContactRequest $request)
+{
+    $data = $request->all();
+
+    // Agar user login hai, created_by_id set karo
+    if (auth()->check()) {
+        $data['created_by_id'] = auth()->id();
     }
 
-    public function store(StoreContactRequest $request)
-    {
-        $contact = Contact::create($request->all());
+    // Status default active
+    $data['status'] = 'active';
 
-        return (new ContactResource($contact))
-            ->response()
-            ->setStatusCode(Response::HTTP_CREATED);
-    }
+    $contact = Contact::create($data);
+
+    return response()->json([
+        'message' => 'Contact created successfully',
+        'data' => $contact
+    ], 201);
+}
+
 
     public function show(Contact $contact)
     {

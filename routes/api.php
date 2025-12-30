@@ -1,5 +1,9 @@
 <?php
-
+use App\Http\Controllers\Admin\WhatsAppWebhookController;
+use App\Http\Controllers\Api\Auth\LoginApiController;
+Route::post('/login', [LoginApiController::class, 'login']);
+Route::post('/logout', [LoginApiController::class, 'logout'])
+    ->middleware('auth:sanctum');
 Route::group(['prefix' => 'v1', 'as' => 'api.', 'namespace' => 'Api\V1\Admin', 'middleware' => ['auth:sanctum']], function () {
     // Permissions
     Route::apiResource('permissions', 'PermissionsApiController');
@@ -53,3 +57,8 @@ Route::group(['prefix' => 'v1', 'as' => 'api.', 'namespace' => 'Api\V1\Admin', '
     Route::post('organizers/media', 'OrganizerApiController@storeMedia')->name('organizers.storeMedia');
     Route::apiResource('organizers', 'OrganizerApiController');
 });
+
+
+
+    Route::get('/whatsapp/webhook', [WhatsAppWebhookController::class, 'verify']);
+Route::post('/whatsapp/webhook', [WhatsAppWebhookController::class, 'handle']);

@@ -14,10 +14,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Str;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use SoftDeletes, Notifiable, Auditable, HasFactory;
+    use HasApiTokens, SoftDeletes, Notifiable, Auditable, HasFactory;
 
     public $table = 'users';
 
@@ -54,6 +55,7 @@ class User extends Authenticatable
     {
         return $this->roles()->where('id', 1)->exists();
     }
+    
 
     public function __construct(array $attributes = [])
     {
@@ -101,6 +103,8 @@ public function emails()
 {
     return $this->hasMany(Email::class, 'created_by_id');
 }
+
+
 
 
 
