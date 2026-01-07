@@ -1,5 +1,6 @@
 <?php
 use App\Http\Controllers\Admin\ChatbotRuleController;
+use App\Http\Controllers\Admin\WhatsAppController;
 
 Route::redirect('/', '/login');
 Route::get('/home', function () {
@@ -137,6 +138,11 @@ Route::group(['prefix' => 'admin', 'as' => 'admin.', 'namespace' => 'Admin', 'mi
     ->name('chatbot.rules.testPage');
 Route::post('chatbot/test', [ChatbotRuleController::class, 'testBot'])
     ->name('chatbot.rules.test');
+
+
+    Route::get('whats-apps/{whatsapp}/logs',
+    [WhatsAppController::class, 'logs']
+)->name('whats-apps.logs');
 
 
 });

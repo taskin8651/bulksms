@@ -9,6 +9,7 @@ use App\Models\WhatsAppSetup;
 use Illuminate\Support\Facades\Auth;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Symfony\Component\HttpFoundation\Response;
+use App\Models\ChatbotAnalytic;
 
 class ChatbotRuleController extends Controller
 {
@@ -20,7 +21,14 @@ class ChatbotRuleController extends Controller
                     ->orderBy('priority', 'asc')
                     ->get();
 
-        return view('admin.chatbot_rules.index', compact('rules'));
+                    $topKeywords = ChatbotAnalytic::where('created_by_id', Auth::id())
+    ->selectRaw('matched_keyword, COUNT(*) as total')
+    ->groupBy('matched_keyword')
+    ->orderByDesc('total')
+    ->get();
+
+
+        return view('admin.chatbot_rules.index', compact('rules', 'topKeywords'));
     }
 
     public function create()
@@ -116,7 +124,8 @@ public function testPage()
 }
 
 
-    public function testBot(Request $request)
+
+public function testBot(Request $request)
 {
     $message = strtolower(trim($request->message));
 
@@ -125,16 +134,34 @@ public function testPage()
         ->orderBy('priority', 'asc')
         ->get();
 
+    $defaultReply = null;
+
     foreach ($rules as $rule) {
+
+        $matched = false;
+
         if ($rule->trigger_type == 'exact' && $message === strtolower($rule->trigger_value)) {
-            return response()->json(['reply' => $rule->reply_message]);
+            $matched = true;
         }
 
         if ($rule->trigger_type == 'contains' && str_contains($message, strtolower($rule->trigger_value))) {
-            return response()->json(['reply' => $rule->reply_message]);
+            $matched = true;
         }
 
         if ($rule->trigger_type == 'starts_with' && str_starts_with($message, strtolower($rule->trigger_value))) {
+            $matched = true;
+        }
+
+        if ($matched) {
+
+            // 🔥 Analytics save
+            ChatbotAnalytic::create([
+                'chatbot_rule_id' => $rule->id,
+                'created_by_id' => Auth::id(),
+                'user_message' => $message,
+                'matched_keyword' => $rule->trigger_value,
+            ]);
+
             return response()->json(['reply' => $rule->reply_message]);
         }
 
@@ -143,9 +170,18 @@ public function testPage()
         }
     }
 
+    // Default analytics
+    ChatbotAnalytic::create([
+        'chatbot_rule_id' => null,
+        'created_by_id' => Auth::id(),
+        'user_message' => $message,
+        'matched_keyword' => 'default',
+    ]);
+
     return response()->json([
         'reply' => $defaultReply ?? 'Sorry, samajh nahi aaya 😔'
     ]);
 }
+
 
 }

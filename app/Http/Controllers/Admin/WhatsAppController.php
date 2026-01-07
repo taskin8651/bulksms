@@ -10,11 +10,17 @@ use App\Http\Requests\UpdateWhatsAppRequest;
 use App\Models\Contact;
 use App\Models\WhatsApp;
 use App\Models\WhatsAppTemplate;
+use App\Models\WhatsAppMessageLog;
+use App\Models\WhatsAppSetup;
 use Gate;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Yajra\DataTables\Facades\DataTables;
 use App\Jobs\SendWhatsAppBulkMessage;
+use Illuminate\Support\Facades\Auth;
+
+
+
 
 class WhatsAppController extends Controller
 {
@@ -91,20 +97,53 @@ class WhatsAppController extends Controller
         return view('admin.whatsApps.create', compact('contacts', 'templates'));
     }
 
-    public function store(StoreWhatsAppRequest $request)
-    {
-        // Create WhatsApp campaign
-        $whatsApp = WhatsApp::create($request->validated());
 
-        // Attach selected contacts
-        $whatsApp->contacts()->sync($request->input('contacts', []));
+public function store(StoreWhatsAppRequest $request)
+{
+    // 🔥 Logged-in user ka ACTIVE WhatsApp setup
+    $setup = WhatsAppSetup::where('created_by_id', Auth::id())
+        ->where('status', 1)
+        ->first();
 
-        // Dispatch background job to send messages
-        SendWhatsAppBulkMessage::dispatch($whatsApp);
-
-        return redirect()->route('admin.whats-apps.index')
-            ->with('success', 'WhatsApp campaign created and queued for sending.');
+    if (!$setup) {
+        return back()->withErrors([
+            'whatsapp_setup' => 'Active WhatsApp setup not found for this user.'
+        ]);
     }
+
+    // 🔹 Create WhatsApp campaign
+    $whatsApp = WhatsApp::create(array_merge(
+        $request->validated(),
+        [
+            'created_by_id'     => Auth::id(),
+            'status'            => 'running',
+            'whatsapp_setup_id' => $setup->id, // 🔥 AUTO ASSIGNED
+        ]
+    ));
+
+    // 🔹 Attach contacts
+    $whatsApp->contacts()->sync($request->input('contacts', []));
+
+    // 🔥 Create message logs
+    foreach ($whatsApp->contacts as $contact) {
+        WhatsAppMessageLog::create([
+            'whatsapp_id'   => $whatsApp->id,
+            'contact_id'    => $contact->id,
+            'message'       => $whatsApp->template->body,
+            'status'        => 'pending',
+            'created_by_id' => Auth::id(),
+        ]);
+    }
+
+    // 🔹 Dispatch job (ID pass karo)
+    SendWhatsAppBulkMessage::dispatch($whatsApp->id);
+
+    return redirect()->route('admin.whats-apps.index')
+        ->with('success', 'WhatsApp campaign created and queued.');
+}
+
+
+
 
    public function edit(WhatsApp $whatsApp)
 {
@@ -159,4 +198,29 @@ public function update(UpdateWhatsAppRequest $request, WhatsApp $whatsApp)
 
         return response(null, Response::HTTP_NO_CONTENT);
     }
+
+   public function logs($whatsappId)
+{
+    $whatsApp = WhatsApp::where('id', $whatsappId)
+        ->where('created_by_id', auth()->id())
+        ->firstOrFail();
+
+    $logs = WhatsAppMessageLog::with('contact')
+        ->where('whatsapp_id', $whatsappId)
+        ->where('created_by_id', auth()->id())
+        ->orderBy('id', 'desc')
+        ->get();
+
+        $summary = WhatsAppMessageLog::where('whatsapp_id', $whatsApp->id)
+    ->selectRaw("
+        COUNT(*) as total,
+        SUM(status='sent') as sent,
+        SUM(status='failed') as failed,
+        SUM(status='pending') as pending
+    ")
+    ->first();
+
+    return view('admin.whatsApps.logs', compact('logs', 'whatsApp', 'summary'));
+}
+
 }

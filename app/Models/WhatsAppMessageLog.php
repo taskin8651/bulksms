@@ -20,6 +20,7 @@ class WhatsAppMessageLog extends Model
         'status',
         'error_message',
         'response_payload',
+        'created_by_id',
     ];
 
     protected $casts = [
@@ -35,4 +36,10 @@ class WhatsAppMessageLog extends Model
     {
         return $this->belongsTo(Contact::class, 'contact_id');
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+    
 }

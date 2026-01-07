@@ -61,4 +61,22 @@
         </table>
     </div>
 </div>
+
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            <th>Keyword</th>
+            <th>Total Used</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($topKeywords as $row)
+            <tr>
+                <td>{{ $row->matched_keyword }}</td>
+                <td>{{ $row->total }}</td>
+            </tr>
+        @endforeach
+    </tbody>
+</table>
+
 @endsection

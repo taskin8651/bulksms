@@ -32,6 +32,7 @@ class WhatsApp extends Model
         'setup_id',
         'created_by_id',
         'is_broadcast',
+        'whatsapp_setup_id',
     ];
 
     public const STATUS_SELECT = [
@@ -56,4 +57,10 @@ class WhatsApp extends Model
     {
         return $this->belongsToMany(Contact::class);
     }
+
+    
+    public function setup()
+{
+    return $this->belongsTo(WhatsAppSetup::class, 'whatsapp_setup_id');
+}
 }
